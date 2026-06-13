@@ -52,24 +52,17 @@ pnputil /remove-device "ROOT\KDNIC\0000"
 pnputil /disable-device "SWD\MMDEVAPI\MICROSOFTGSWAVETABLESYNTH"
 pnputil /disable-device "ROOT\MEDIA\0000"
 pnputil /disable-device "ROOT\COMPOSITEBUS\0000"
-pnputil /disable-device "HDAUDIO\FUNC_01&VEN_8384&DEV_7680&SUBSYS_83847680&REV_1034\4&31E60982&0&0001"
-pnputil /disable-device "PCI\VEN_8086&DEV_2668&SUBSYS_76808384&REV_01\3&267A616A&0&28"
 pnputil /disable-device "PCI\VEN_10DE&DEV_10F9&SUBSYS_868E1043&REV_A1\4&3622C94C&0&0119"
 pnputil /disable-device "ROOT\VDRVROOT\0000"
 pnputil /disable-device "ROOT\NDISVIRTUALBUS\0000"
 pnputil /disable-device "ROOT\RDPBUS\0000"
 pnputil /disable-device "ROOT\UMBUS\0000"
-pnputil /disable-device "HDAUDIO\FUNC_01&VEN_8384&DEV_7680&SUBSYS_83847680&REV_1034\4&31E60982&0&0001"
 pnputil /disable-device "SWD\PRINTENUM\PRINTQUEUES"
 pnputil /disable-device "SWD\PRINTENUM\{E70E9471-8340-42BE-AC0A-A20FA6D23978}"
 pnputil /disable-device "ACPI\PNP0501\0"
 pnputil /disable-device "PCI\VEN_1022&DEV_1486&SUBSYS_7C561462&REV_00\4&4BC21C8&0&0141"
 # Disable Bright Computech
 pnputil /disable-device "USB\VID_1462&PID_7C56\A02020051102"
-# Disable Generic USB Hub
-pnputil /disable-device "USB\VID_05E3&PID_0608\6&2F985C08&0&6"
-pnputil /disable-device "{36fc9e60-c465-11cf-8056-444553540000}"
-pnputil /disable-device "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}"
 
 # Disable Mitigations
 C:\Windows\Setup\Scripts\files\MinSudo --NoLogo --TrustedInstaller --Privileged Powershell Rename-Item "C:\Windows\System32\mcupdate_GenuineIntel.dll" "mcupdate_GenuineIntel.dlll" -Force
@@ -77,10 +70,6 @@ C:\Windows\Setup\Scripts\files\MinSudo --NoLogo --TrustedInstaller --Privileged 
 
 Stop-Process -Name "backgroundTaskHost" -Force -ErrorAction SilentlyContinue
 C:\Windows\Setup\Scripts\files\MinSudo --NoLogo --TrustedInstaller --Privileged Powershell Rename-Item "C:\Windows\System32\backgroundTaskHost.exe" "backgroundTaskHost.exee" -Force
-
-# Breaks Clipboard History
-Stop-Process -Name "TextInputHost" -Force -ErrorAction SilentlyContinue
-C:\Windows\Setup\Scripts\files\MinSudo --NoLogo --TrustedInstaller --Privileged Powershell Rename-Item "C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\TextInputHost.exe" "TextInputHost.exee" -Force
 
 # Set QoS Policy For Games
 New-NetQosPolicy -Name "Valorant" -AppPathNameMatchCondition "VALORANT-Win64-Shipping.exe" -DSCPAction 46
