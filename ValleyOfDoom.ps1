@@ -138,7 +138,6 @@ try {
         "disable fast startup"
         "disable customer experience improvement program"
         "disable windows error reporting"
-        "disable clipboard history"
         "disable activity feed"
         "disable advertising id"
         "disable autoplay"
@@ -162,7 +161,11 @@ try {
         "disable fault tolerant heap"
     )
 
-    $defenderKey = "disable windows defender"
+    # Keys to set false
+    $keysToSetFalse = @(
+        "disable windows defender"
+        "disable clipboard history"
+    )
 
     # Handle both flat and nested "options" structures
     $optionsObject = if ($jsonContent.PSObject.Properties.Name -contains "options") {
@@ -185,7 +188,7 @@ try {
                 $unchangedAlreadyTrue += $key
                 Write-Log "ALREADY TRUE: $key" "SKIPPED"
             }
-        } elseif ($key -eq $defenderKey) {
+        } elseif ($keysToSetFalse -contains $key) {
             if ($currentValue -eq $true) {
                 $optionsObject.$key = $false
                 $modifiedSettings += "$key (set to FALSE)"
@@ -256,7 +259,7 @@ try {
     Write-Log "=== ValleyOfDoom Configuration Summary ===" "INFO"
     Write-Log "Settings changed: $($modifiedSettings.Count)" "INFO"
     Write-Log "Unchanged (already true): $($unchangedAlreadyTrue.Count)" "INFO"
-    Write-Log "Unchanged (already false - Defender): $($unchangedAlreadyFalse.Count)" "INFO"
+    Write-Log "Unchanged (already false - Keep Enabled): $($unchangedAlreadyFalse.Count)" "INFO"
     Write-Log "Total targeted: $($modifiedSettings.Count + $unchangedAlreadyTrue.Count + $unchangedAlreadyFalse.Count)" "INFO"
 
     if ($modifiedSettings.Count -gt 0) {
