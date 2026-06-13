@@ -819,8 +819,45 @@ try {
         reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "CreateDesktopShortcutDefault" /t REG_DWORD /d 0 /f >$null 2>&1
         reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "RemoveDesktopShortcutDefault" /t REG_DWORD /d 1 /f >$null 2>&1
         reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "InstallDefault" /t REG_DWORD /d 0 /f >$null 2>&1
+        # Block Edge WebView2 Updates specifically via App GUID
+        reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" /t REG_DWORD /d 0 /f >$null 2>&1
+        reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" /t REG_DWORD /d 0 /f >$null 2>&1
+        # Block ALL automatic updates globally via EdgeUpdate policy
+        reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "UpdateDefault" /t REG_DWORD /d 0 /f >$null 2>&1
 
         Write-Log "Applied Edge reinstallation prevention policies" "SUCCESS"
+    }
+
+# ============================================================
+    # STEP 15.5: Create Dummy File Blocks for Edge Directories
+    # ============================================================
+    Write-Log "=== Step 15.5: Creating Dummy File Blocks ===" "INFO"
+
+    Invoke-Step "Create dummy files to prevent folder recreation" {
+        $pathsToBlock = @(
+            "C:\Program Files (x86)\Microsoft\Edge",
+            "C:\Program Files (x86)\Microsoft\EdgeWebView",
+            "C:\Program Files (x86)\Microsoft\EdgeUpdate"
+        )
+
+        foreach ($path in $pathsToBlock) {
+            # Only create the block if the folder was successfully deleted
+            if (-not (Test-Path $path)) {
+                try {
+                    # Create a blank file with no extension
+                    New-Item -ItemType File -Path $path -Force -ErrorAction Stop | Out-Null
+                    
+                    # Set to ReadOnly and System to prevent the updater from overwriting it
+                    Set-ItemProperty -Path $path -Name Attributes -Value "ReadOnly, System" -ErrorAction Stop
+                    
+                    Write-Log "Created locked dummy file at: $path" "SUCCESS"
+                } catch {
+                    Write-Log "Failed to create dummy file at $path - $($_.Exception.Message)" "WARNING"
+                }
+            } else {
+                Write-Log "Directory still exists, cannot create dummy file block at: $path" "WARNING"
+            }
+        }
     }
 
     # ============================================================
