@@ -63,6 +63,7 @@ Run-Step "Download dependencies, scripts, and binaries to files root" {
         "disable-scheduled-tasks.ps1",
         "Afterburner.ps1",
         "Sound.ps1",
+        "Set-Windows-Sens.ps1",
         "disable-process-mitigations.bat"
     )
 
@@ -186,6 +187,15 @@ Run-Step "Run Sound externally" {
     $sndScript = Join-Path $FilesRoot "Sound.ps1"
     if (!(Test-Path $sndScript)) { throw "Missing Sound.ps1" }
     Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sndScript`"" -Wait
+}
+
+# =========================
+# Set-Windows-Sens: External minimized PS.lnk execution
+# =========================
+Run-Step "Run Set-Windows-Sens externally" {
+    $sensScript = Join-Path $FilesRoot "Set-Windows-Sens.ps1"
+    if (!(Test-Path $sensScript)) { throw "Missing Set-Windows-Sens.ps1" }
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sensScript`"" -Wait
 }
 
 # =========================
