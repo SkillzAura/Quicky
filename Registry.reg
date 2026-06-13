@@ -1289,13 +1289,3 @@ Disable ETS
 "DisableStartLayoutSettingSync"=dword:00000002
 "DisableStartLayoutSettingSyncUserOverride"=dword:00000001
 "EnableWindowsBackup"=dword:00000000
-
-; Enable NVME Native Drivers
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Policies\Microsoft\FeatureManagement\Overrides]
-"735209102"=dword:00000001
-"1853569164"=dword:00000001
-"156965516"=dword:00000001
-
-; NVME Native Driver Safemode Fix
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot\Network\{75416E63-5912-4DFA-AE8F-3EFACCAFFB14}]
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot\Minimal\{75416E63-5912-4DFA-AE8F-3EFACCAFFB14}]
