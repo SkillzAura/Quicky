@@ -15,7 +15,7 @@ $ProgressPreference = "SilentlyContinue"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # =========================
-# Paths / Status
+# Paths and Status
 # =========================
 $FilesRoot = "C:\Windows\Setup\Scripts\files"
 $SoftRoot  = Join-Path $FilesRoot "Softwares"
@@ -64,6 +64,9 @@ Run-Step "Download dependencies, scripts, and binaries to files root" {
         "Afterburner.ps1",
         "Sound.ps1",
         "Set-Windows-Sens.ps1",
+        "Brave.ps1",
+        "Remove-Bloatware.ps1",
+        "Uninstall-OneDrive.ps1",
         "disable-process-mitigations.bat"
     )
 
@@ -84,24 +87,47 @@ Run-Step "Force-close blocking apps/processes" {
 }
 
 # =========================
-# Services (ONLY requested subset)
+# Windows Cleanup: Parallel Background Execution
 # =========================
-Run-Step "Apply selected services only" {
+Run-Step "Run cleanup scripts in parallel (Bloat, OneDrive)" {
+    $cleanupScripts = @("Remove-Bloatware.ps1", "Uninstall-OneDrive.ps1")
+    foreach ($script in $cleanupScripts) {
+        $scriptPath = Join-Path $FilesRoot $script
+        if (Test-Path $scriptPath) {
+            Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$scriptPath`""
+        } else {
+            throw "Missing $script"
+        }
+    }
+}
+
+# =========================
+# Services (With Laptop/VM Safety Check)
+# =========================
+Run-Step "Apply selected services (with msisadrv safety check)" {
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\SysMain"  /v Start /t REG_DWORD /d 4 /f >$null
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WSearch"  /v Start /t REG_DWORD /d 4 /f >$null
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\DusmSvc"  /v Start /t REG_DWORD /d 4 /f >$null
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\lfsvc"    /v Start /t REG_DWORD /d 4 /f >$null
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler"  /v Start /t REG_DWORD /d 4 /f >$null
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\msisadrv" /v Start /t REG_DWORD /d 4 /f >$null
+    
+    $SystemInfo = Get-WmiObject -Class Win32_ComputerSystem
+    $SystemType = $SystemInfo.PCSystemType
+    $IsVirtualMachine = $SystemInfo.Manufacturer -match "Microsoft|VMware|VirtualBox" -or $SystemInfo.Model -match "Virtual"
+
+    if (-not $IsVirtualMachine -and $SystemType -ne 2) {
+        $RegPath = "HKLM:\SYSTEM\CurrentControlSet\Services\msisadrv"
+        Set-ItemProperty -Path $RegPath -Name "Start" -Value 4 -ErrorAction SilentlyContinue
+    }
 }
 
 # =========================
-# Disable Scheduled Tasks (External minimized PS.lnk execution)
+# Disable Scheduled Tasks (External minimized)
 # =========================
 Run-Step "Run disable-scheduled-tasks.ps1 externally" {
     $dst = Join-Path $FilesRoot "disable-scheduled-tasks.ps1"
     if (!(Test-Path $dst)) { throw "Missing disable-scheduled-tasks.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$dst`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$dst`""
 }
 
 # =========================
@@ -114,21 +140,30 @@ Run-Step "Apply Registry.reg" {
 }
 
 # =========================
-# ValleyOfDoom (External minimized PS.lnk execution)
-# =========================
-Run-Step "Run ValleyOfDoom externally" {
-    $vod = Join-Path $FilesRoot "ValleyOfDoom.ps1"
-    if (!(Test-Path $vod)) { throw "Missing ValleyOfDoom.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$vod`"" -Wait
-}
-
-# =========================
-# Remove-Edge (External minimized PS.lnk execution)
+# Remove-Edge (External minimized)
 # =========================
 Run-Step "Run Remove-Edge externally" {
     $re = Join-Path $FilesRoot "Remove-Edge.ps1"
     if (!(Test-Path $re)) { throw "Missing Remove-Edge.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$re`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$re`""
+}
+
+# =========================
+# Brave Browser Installation
+# =========================
+Run-Step "Run Brave externally" {
+    $brave = Join-Path $FilesRoot "Brave.ps1"
+    if (!(Test-Path $brave)) { throw "Missing Brave.ps1" }
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$brave`""
+}
+
+# =========================
+# ValleyOfDoom (External minimized)
+# =========================
+Run-Step "Run ValleyOfDoom externally" {
+    $vod = Join-Path $FilesRoot "ValleyOfDoom.ps1"
+    if (!(Test-Path $vod)) { throw "Missing ValleyOfDoom.ps1" }
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$vod`""
 }
 
 # =========================
@@ -181,21 +216,21 @@ URL=$URL17
 }
 
 # =========================
-# Sound: External minimized PS.lnk execution
+# Sound: External minimized
 # =========================
 Run-Step "Run Sound externally" {
     $sndScript = Join-Path $FilesRoot "Sound.ps1"
     if (!(Test-Path $sndScript)) { throw "Missing Sound.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sndScript`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sndScript`""
 }
 
 # =========================
-# Set-Windows-Sens: External minimized PS.lnk execution
+# Set-Windows-Sens: External minimized
 # =========================
 Run-Step "Run Set-Windows-Sens externally" {
     $sensScript = Join-Path $FilesRoot "Set-Windows-Sens.ps1"
     if (!(Test-Path $sensScript)) { throw "Missing Set-Windows-Sens.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sensScript`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$sensScript`""
 }
 
 # =========================
@@ -356,12 +391,12 @@ Run-Step "Apply Performance-Tweaks" {
 }
 
 # =========================
-# Power plan: apply all (External minimized PS.lnk execution)
+# Power plan: apply all (External minimized)
 # =========================
 Run-Step "Run Power-Plan externally" {
     $pp = Join-Path $FilesRoot "Power-Plan.ps1"
     if (!(Test-Path $pp)) { throw "Missing Power-Plan.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$pp`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$pp`""
 }
 
 # =========================
@@ -410,17 +445,33 @@ exit
 }
 
 # =========================
-# Afterburner: External minimized PS.lnk execution
+# Afterburner: External minimized
 # =========================
 Run-Step "Run Afterburner externally" {
     $abScript = Join-Path $FilesRoot "Afterburner.ps1"
     if (!(Test-Path $abScript)) { throw "Missing Afterburner.ps1" }
-    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$abScript`"" -Wait
+    Start-Process -FilePath $psLnk -ArgumentList "-windowstyle hidden -ExecutionPolicy Bypass -NoLogo -File `"$abScript`""
 }
 
 # =========================
-# Ethernet: ONLY apply from line 229 onward in your source
-# (skip installs + static ip + prior setup)
+# WAIT FOR BACKGROUND TASKS TO FINISH
+# =========================
+Write-Host "Checking for background powershell tasks to finish..." -ForegroundColor Cyan
+
+# Robust WMI check: Loops until no other powershell.exe is actively running a script from your files folder
+while ($true) {
+    $runningTasks = Get-WmiObject Win32_Process -Filter "Name='powershell.exe'" | Where-Object { 
+        $_.CommandLine -like "*\Windows\Setup\Scripts\files\*" -and $_.ProcessId -ne $PID 
+    }
+    
+    if (-not $runningTasks) {
+        break
+    }
+    Start-Sleep -Seconds 2
+}
+
+# =========================
+# Ethernet: Execute AFTER all background tasks
 # =========================
 Run-Step "Apply Ethernet post-229 tuning only" {
     Disable-NetAdapterBinding -Name "*" -ComponentID ms_lldp -ErrorAction SilentlyContinue
