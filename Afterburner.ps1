@@ -242,7 +242,7 @@ Remove-Item "C:\Users\$env:username\Desktop\MSI Afterburner.lnk" -Force
 $filePath = "C:\Windows\Maintenance.bat"
 
 # Define the command to insert
-$lineToInsert = 'start powershell -windowstyle hidden -ExecutionPolicy Bypass -NoLogo -Command "Start-Process ''C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe'' -ArgumentList ''/Profile1'',''/Q'' -WindowStyle Hidden"'
+$lineToInsert = 'start "" "C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe" /Profile1 /Q'
 
 # Define the line to insert before
 $targetLine = 'exit'
