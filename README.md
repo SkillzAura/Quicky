@@ -7,3 +7,7 @@ iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/Pre-Setup.ps1
 Quick Settings
 
 iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/Quicky-OneShot.ps1 | iex
+
+Minecraft Settings
+
+iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/minecraft-setup.ps1 | iex
