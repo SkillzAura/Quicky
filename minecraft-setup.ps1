@@ -1,4 +1,4 @@
-# MC-LAN-Setup.ps1
+# minecraft-setup.ps1
 # Single-file silent deployer for Minecraft and Lunar Client settings
 
 # =========================
@@ -16,9 +16,7 @@ $ProgressPreference = "SilentlyContinue"
 # =========================
 # Paths and Status
 # =========================
-# REPLACE THIS URL WITH YOUR ACTUAL GITHUB RELEASE LINK FOR MC_CONFIG.ZIP
-$ZipUrl = "https://github.com/SkillzAura/Quicky/releases/download/Minecraft/mc_config.zip"
-
+$ZipUrl = "https://github.com/SkillzAura/Quicky/releases/download/lan-setup/mc_config.zip"
 $TempZip = "$env:TEMP\mc_config.zip"
 $BackupDir = "$env:TEMP\mc_configs_backup"
 $StatusOut = Join-Path ([Environment]::GetFolderPath("Desktop")) "MC-Setup-Status.txt"
@@ -36,7 +34,7 @@ function Run-Step {
 # =========================
 # Close apps first
 # =========================
-Run-Step "Force-close blocking games (Minecraft & Lunar)" {
+Run-Step "Force-close blocking games" {
     $kill = @("javaw", "Lunar Client", "lunarclient")
     foreach($p in $kill){ Get-Process -Name$p -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue }
 }
@@ -54,7 +52,7 @@ Run-Step "Download and extract mc_config.zip" {
 # =========================
 # Apply Settings
 # =========================
-Run-Step "Apply .minecraft settings (options.txt, etc.)" {
+Run-Step "Apply .minecraft settings" {
     $MinecraftPath = "$env:APPDATA\.minecraft"
     $SrcPath = "$BackupDir\mc\.minecraft"
     
@@ -78,7 +76,7 @@ Run-Step "Install Resource Packs" {
     }
 }
 
-Run-Step "Apply Lunar Settings to active profile" {
+Run-Step "Apply Lunar Settings" {
     $LunarGamePath = "$env:USERPROFILE\.lunarclient\settings\game"
     $SrcLunar = "$BackupDir\mc\lunar"
     
@@ -86,14 +84,13 @@ Run-Step "Apply Lunar Settings to active profile" {
         if (Test-Path $LunarGamePath) {
             $ProfileDirs = Get-ChildItem -Path$LunarGamePath -Directory
             if ($ProfileDirs) {
-                # Select the most recently modified profile folder
                 $TargetProfile =$ProfileDirs | Sort-Object LastWriteTime -Descending | Select-Object -First 1
                 Copy-Item -Path "$SrcLunar\*" -Destination $TargetProfile.FullName -Recurse -Force
             } else {
-                throw "No profile folders found in Lunar game settings."
+                throw "No profile folders found."
             }
         } else {
-            throw "Lunar settings folder not found. (Did you launch Lunar once on this PC?)"
+            throw "Lunar settings folder not found."
         }
     } else {
         throw "Source lunar folder not found in zip."
@@ -103,7 +100,7 @@ Run-Step "Apply Lunar Settings to active profile" {
 # =========================
 # Cleanup
 # =========================
-Run-Step "Cleanup temporary ZIP (Keep extracted backup in %TEMP%)" {
+Run-Step "Cleanup temporary ZIP" {
     if (Test-Path $TempZip) { Remove-Item -Path$TempZip -Force -ErrorAction SilentlyContinue }
 }
 
@@ -111,18 +108,19 @@ Run-Step "Cleanup temporary ZIP (Keep extracted backup in %TEMP%)" {
 # Final short desktop status
 # =========================
 Run-Step "Write short desktop status file" {
-    $final = @()$final += "Minecraft LAN Setup Completed"
-    $final += "Backup stored at: $BackupDir"
-    $final += "Successful: $($stepsOk.Count)"
-    $final += "Failed: $($stepsFail.Count)"
-    $final += ""
-    $final += "[OK]"
-    $final += ($stepsOk \vert{} ForEach-Object { "- $_" })
-    if ($stepsFail.Count -gt 0) {$final += ""
-        $final += "[FAILED]"
-        $final += ($stepsFail \vert{} ForEach-Object { "- $_" })
+    $final = New-Object System.Collections.Generic.List[string]$final.Add("Minecraft LAN Setup Completed")
+    $final.Add("Backup stored at: $BackupDir")
+    $final.Add("Successful: $($stepsOk.Count)")
+    $final.Add("Failed: $($stepsFail.Count)")
+    $final.Add("")
+    $final.Add("[OK]")
+    foreach ($ok in$stepsOk) { $final.Add("- $ok") }
+
+    if ($stepsFail.Count -gt 0) {$final.Add("")
+        $final.Add("[FAILED]")
+        foreach ($fail in$stepsFail) { $final.Add("- $fail") }
     }
-    Set-Content -Path $StatusOut -Value$final -Encoding UTF8
+    Set-Content -Path $StatusOut -Value$final.ToArray() -Encoding UTF8
 }
 
 exit 0
