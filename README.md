@@ -10,4 +10,4 @@ iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/Quicky-OneSho
 
 Minecraft Settings
 
-iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/minecraft-setup.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/SkillzAura/Quicky/main/minecraftsetup.ps1 | iex
